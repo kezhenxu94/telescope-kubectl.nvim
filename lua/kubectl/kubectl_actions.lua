@@ -3,6 +3,7 @@ local Job = require "plenary.job"
 local actions = require "telescope.actions"
 local action_state = require "telescope.actions.state"
 local flatten = vim.tbl_flatten
+local utils = require "telescope.utils"
 
 local store = require("kubectl.store")
 local k_utils = require "kubectl.utils"
@@ -322,7 +323,10 @@ function M.delete_resource(opts)
         if code == 0 then
           print("Resource deleted successfully!")
         else
-          print("Error deleting resource")
+          utils.notify("kubectl", {
+            msg = "Error deleting resource",
+            level = "ERROR",
+          })
         end
       end,
     }:start()
@@ -458,7 +462,10 @@ function M.set_image(opts, parent)
         if code == 0 then
           print("Image set successfully!")
         else
-          print("Error setting image")
+          utils.notify("kubectl", {
+            msg = "Error setting image",
+            level = "ERROR",
+          })
         end
       end,
     }:start()

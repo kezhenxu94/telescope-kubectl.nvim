@@ -127,6 +127,7 @@ function k_make_entry.gen_for_port_forward(opts)
     separator = " ",
     items = {
       { width = 10 },
+      { width = 20 },
       { width = 64 },
       { remaining = true },
     },
@@ -135,6 +136,7 @@ function k_make_entry.gen_for_port_forward(opts)
   local make_display = function(entry)
     return displayer {
       entry.value.resource.kind,
+      entry.value.resource.metadata.namespace,
       entry.value.resource.metadata.name,
       entry.value.ports,
     }
