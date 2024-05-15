@@ -32,31 +32,93 @@ function k_make_entry.gen_for_contexts(opts)
   end
 end
 
-function k_make_entry.gen_from_object(items)
-  items = items or {}
-
-  local max_ns_len = k_utils.max(items, function(item)
-    return item.metadata.namespace and #item.metadata.namespace or 0
-  end)
-  local max_status_len = k_utils.max(items, function(item)
-    local status = (k_utils.resource_status(item) or {}).status
-    return status and #status or 0
-  end)
-
-  local c = {
-    { width = 4 }
-  }
-  if max_status_len > 0 then
-    table.insert(c, { width = max_status_len })
-  end
-  if max_ns_len > 0 then
-    table.insert(c, { width = max_ns_len })
-  end
-  table.insert(c, { width = 64 })
+function k_make_entry.gen_from_namespaces(resource)
+  assert(resource == 'namespaces', "`resource` must be 'namespaces'")
 
   local displayer = entry_display.create {
     separator = " ",
-    items = c,
+    items = {
+      { width = 4 },
+      { remaining = true },
+    },
+  }
+
+  local make_display = function(entry)
+    local time = k_utils.relative_time(entry.value.metadata.creationTimestamp)
+    return displayer {
+      time,
+      entry.value.metadata.name,
+    }
+  end
+
+  return function(line)
+    local entry = vim.json.decode(line)
+    local ordinal = entry.metadata.name
+    local id = entry.kind .. ": " .. entry.metadata.name
+
+    return {
+      display = make_display,
+      value = entry,
+      ordinal = ordinal,
+      id = id,
+    }
+  end
+end
+
+function k_make_entry.gen_from_object_with_status(resource)
+  local displayer = entry_display.create {
+    separator = " ",
+    items = {
+      { width = 4 },
+      { width = 10 },
+      { width = 10 },
+      { remaining = true },
+    },
+  }
+
+  local make_display = function(entry)
+    local status = entry.status
+    return displayer {
+      { k_utils.relative_time(entry.value.metadata.creationTimestamp), status and status.hl },
+      { status and status.status,                                      status and status.hl },
+      { entry.value.metadata.namespace,                                status and status.hl },
+      { entry.value.metadata.name,                                     status and status.hl },
+    }
+  end
+
+  return function(line)
+    local entry = vim.json.decode(line)
+    local ns = entry.metadata.namespace
+    local ordinal = ns and (ns .. " ") or ""
+    ordinal = ordinal .. entry.metadata.name
+    local id = entry.kind .. ": " .. entry.metadata.name
+    id = ns and (id .. "." .. ns) or id
+
+    local status = k_utils.resource_status(entry)
+
+    return {
+      display = make_display,
+      value = entry,
+      status = status,
+      ordinal = ordinal,
+      id = id,
+    }
+  end
+end
+
+k_make_entry.gen_from_pods = k_make_entry.gen_from_object_with_status
+k_make_entry.gen_from_deployments = k_make_entry.gen_from_object_with_status
+
+function k_make_entry.gen_from_object(resource)
+  assert(resource ~= 'namespaces', "`resource` must not be 'namespaces'")
+
+  local displayer = entry_display.create {
+    separator = " ",
+    items = {
+      { width = 4 },
+      { width = 10 },
+      { remaining = true },
+    },
   }
 
   local make_display = function(entry)
@@ -76,7 +138,8 @@ function k_make_entry.gen_from_object(items)
     return displayer(e)
   end
 
-  return function(entry)
+  return function(line)
+    local entry = vim.json.decode(line)
     local ns = entry.metadata.namespace
     local ordinal = ns and (ns .. " ") or ""
     ordinal = ordinal .. entry.metadata.name

@@ -27,7 +27,7 @@ vim.api.nvim_create_autocmd({ "VimLeavePre" }, {
 local get_resource = function(opts, resource, resource_opts)
   opts = opts or {}
   opts.namespace = opts.namespace or ''
-  opts.output = opts.output or 'json'
+  opts.output = opts.output or 'jsonpath={range .items[*]}{@}{"\\n"}{end}'
 
   local opts_query = k_utils.parse_opts(opts, resource)
   local cmd = vim.tbl_flatten { "kubectl", "get", resource, opts_query }
@@ -36,56 +36,44 @@ local get_resource = function(opts, resource, resource_opts)
 
   print("Loading " .. resource .. "...")
 
-  vim.defer_fn(
-    vim.schedule_wrap(function()
-      local items
-      if opts.output == 'json' then
-        local results = table.concat(utils.get_os_command_output(cmd), " ")
-        local json = vim.json.decode(results)
-        items = json.items or {}
-      elseif opts.output:find('jsonpath') then
-        local lines = utils.get_os_command_output(cmd)
-        items = {}
-        for _, line in ipairs(lines) do
-          if line == '' then
-            goto continue
+  local finder = function() 
+    return finders.new_oneshot_job(cmd, {
+    entry_maker = (k_make_entry['gen_from_' .. resource] or k_make_entry.gen_from_object)(resource),
+  })
+  end
+
+  pickers.new(opts, {
+    prompt_title = resource,
+    results_title = require('kubectl.store').get('context'),
+    finder = finder(),
+    previewer = k_previewers.resource_previewer.new(opts),
+    sorter = conf.generic_sorter(opts),
+    attach_mappings = function(_, map)
+      resource_opts = resource_opts or {}
+
+      map("n", "<C-r>", k_actions.reload_resource(opts, finder), {
+        desc = "Refresh",
+      })
+
+      if resource_opts.next then
+        actions.select_default:replace(function()
+          local selection = action_state.get_selected_entry()
+          if not selection then
+            return
           end
-          local item = vim.json.decode(line)
-          table.insert(items, item)
-          ::continue::
-        end
+          resource_opts.next(selection, opts)
+        end)
       end
 
-      pickers.new(opts, {
-        prompt_title = resource,
-        results_title = require('kubectl.store').get('context'),
-        finder = finders.new_table {
-          results = items or {},
-          entry_maker = k_make_entry.gen_from_object(items),
-        },
-        previewer = k_previewers.resource_previewer.new(opts),
-        sorter = conf.generic_sorter(opts),
-        attach_mappings = function(_, map)
-          resource_opts = resource_opts or {}
-          if resource_opts.next then
-            actions.select_default:replace(function()
-              local selection = action_state.get_selected_entry()
-              if not selection then
-                return
-              end
-              resource_opts.next(selection, opts)
-            end)
-          end
-
-          if resource_opts.attach_mappings then
-            return resource_opts.attach_mappings(opts, map)
-          end
-          return true
-        end,
-      }):find()
-    end),
-    10
-  )
+      if resource_opts.attach_mappings then
+        return resource_opts.attach_mappings(opts, map)
+      end
+      return true
+    end,
+  }):find()
+  --   end),
+  --   10
+  -- )
 end
 
 local map_set_image = function(opts, map)

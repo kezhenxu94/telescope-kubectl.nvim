@@ -472,4 +472,11 @@ function M.set_image(opts, parent)
   end
 end
 
+function M.reload_resource(opts, finder)
+  return function(prompt_bufnr)
+    local current_picker = action_state.get_current_picker(prompt_bufnr)
+    current_picker:refresh(finder(), { reset_prompt = false })
+  end
+end
+
 return M
