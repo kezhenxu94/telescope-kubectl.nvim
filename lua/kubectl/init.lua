@@ -172,7 +172,7 @@ B.resources = {
       }
 
       opts = opts or {}
-      opts.output = 'json'
+      opts.output = 'jsonpath={range .items[*]}{@}{"\\n"}{end}'
       opts.namespace = selection.value.metadata.namespace
       opts['field-selector'] = table.concat(fieldSelector, ",")
 
@@ -205,7 +205,7 @@ B.resources = {
       end
 
       opts = opts or {}
-      opts.output = 'json'
+      opts.output = 'jsonpath={range .items[*]}{@}{"\\n"}{end}'
       opts.namespace = selection.value.metadata.namespace
       if selector and #selector > 0 then
         opts.selector = table.concat(selector, ",")
@@ -235,7 +235,7 @@ B.resources = {
       end
 
       opts = opts or {}
-      opts.output = 'json'
+      opts.output = 'jsonpath={range .items[*]}{@}{"\\n"}{end}'
       opts.namespace = selection.value.metadata.namespace
       if selector and #selector > 0 then
         opts.selector = table.concat(selector, ",")
@@ -264,7 +264,7 @@ B.resources = {
       end
 
       opts = opts or {}
-      opts.output = 'json'
+      opts.output = 'jsonpath={range .items[*]}{@}{"\\n"}{end}'
       opts.namespace = selection.value.metadata.namespace
       if selector and #selector > 0 then
         opts.selector = table.concat(selector, ",")
@@ -313,7 +313,7 @@ B.resources = {
       end
 
       opts = opts or {}
-      opts.output = 'json'
+      opts.output = 'jsonpath={range .items[*]}{@}{"\\n"}{end}'
       opts.namespace = selection.value.metadata.namespace
       if selector and #selector > 0 then
         opts.selector = table.concat(selector, ",")
