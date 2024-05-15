@@ -359,8 +359,8 @@ function M.port_forward(opts)
     local ports
 
     if #available_ports > 0 then
-      local p = available_ports[1]
-      ports = vim.fn.input("Ports: ", p .. ":" .. p)
+      local p = table.concat(available_ports, ",")
+      ports = vim.fn.input("Ports: ", p)
     end
     if not ports or ports == '' then
       return
