@@ -36,15 +36,15 @@ local get_resource = function(opts, resource, resource_opts)
 
   print("Loading " .. resource .. "...")
 
-  local finder = function() 
+  local finder = function()
     return finders.new_oneshot_job(cmd, {
-    entry_maker = (k_make_entry['gen_from_' .. resource] or k_make_entry.gen_from_object)(resource),
-  })
+      entry_maker = (k_make_entry['gen_from_' .. resource] or k_make_entry.gen_from_object)(resource),
+    })
   end
 
   pickers.new(opts, {
-    prompt_title = resource,
-    results_title = require('kubectl.store').get('context'),
+    prompt_title = require('kubectl.store').get('context'),
+    results_title = resource,
     finder = finder(),
     previewer = k_previewers.resource_previewer.new(opts),
     sorter = conf.generic_sorter(opts),
@@ -104,8 +104,8 @@ local map_set_image = function(opts, map)
     end
 
     pickers.new(opts, {
-      prompt_title = 'Containers',
-      results_title = require('kubectl.store').get('context'),
+      prompt_title = require('kubectl.store').get('context'),
+      results_title = 'Containers',
       finder = finders.new_table {
         results = containers or {},
         entry_maker = k_make_entry.gen_for_containers(opts),
@@ -154,7 +154,7 @@ B.resources = {
   events = {},
   limitranges = {},
   namespaces = {
-    next = function(selection, opts)
+    next = function(selection, _)
       B.get_services({
         namespace = selection.value.metadata.name,
       })
@@ -406,7 +406,7 @@ B.get_contexts = function(opts)
       local results = utils.get_os_command_output(cmd)
 
       pickers.new(opts, {
-        prompt_title = "Contexts",
+        results_title = "Contexts",
         finder = finders.new_table {
           results = results,
           entry_maker = k_make_entry.gen_for_contexts(opts),
@@ -432,8 +432,8 @@ B.get_api_resources = function(opts)
       local results = utils.get_os_command_output(cmd)
 
       pickers.new(opts, {
-        prompt_title = "Resources",
-        results_title = require('kubectl.store').get('context'),
+        prompt_title = require('kubectl.store').get('context'),
+        results_title = "Resources",
         finder = finders.new_table {
           results = results,
           entry_maker = k_make_entry.gen_for_api_resources(opts),

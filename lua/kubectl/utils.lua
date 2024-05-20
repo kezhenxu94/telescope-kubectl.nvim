@@ -36,6 +36,9 @@ function M.parse_opts(opts, target)
 end
 
 function M.relative_time(time)
+  if not time or time == vim.NIL or time == '' then
+    return ""
+  end
   local pattern = "(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)Z"
   local year, month, day, hour, min, sec = time:match(pattern)
   local offset = os.time() - os.time(os.date("!*t"))
